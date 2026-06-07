@@ -1,0 +1,472 @@
+{
+  "name": "Code Summarizer",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "### Steps\n\n1.Read the code related mail > Trigger\n2.Summarize the code using LLM\n3.Generate the comments for the code\n4.Steps 2 and 3 to be done in parallel\n5.Merge the outputs of step 2 and 3\n6.Send the output to me as mail\n",
+        "height": 176,
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1632,
+        -2048
+      ],
+      "typeVersion": 1,
+      "id": "c62ccb41-2940-41ff-aebd-845b536d1028",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "sender": "lostprince123n@gmail.com"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -2192,
+        -1536
+      ],
+      "id": "b6e7dfe2-0ccf-4371-942a-907840af76e3",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "V50BeEYtdUZinEdJ",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -1808,
+        -1568
+      ],
+      "id": "0c353af0-3eff-413b-87a7-fa724823786f",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "u2GmlR9SBNP63fa4",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Given the code below\nCode:\n{{ $json.text }}\n\ngenerate comments for the code so that i can understand what each line of the code does.\nNOTE: Do not modify existing code lines at all.\nJust add the comments wherever required.",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a helpful assistant and know how to write code in python. You can help me to understand the code by adding comments to it."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -1824,
+        -1728
+      ],
+      "id": "8fb919e7-b6d3-46d4-a8a5-e92e1518d948",
+      "name": "Comments_Addition"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -1840,
+        -1168
+      ],
+      "id": "90276e0e-4c00-48e8-a9ae-a60a6f0da729",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "u2GmlR9SBNP63fa4",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Given the code below\nCode:\n{{ $json.text }}\n\ngenerate a summary of what this code does in very simple language. Do note that summary should contain all the important details there are in the code so that I know what the code is about in a quick glance.",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an expert in python code. You have the ability to summarize code in simple language and have the knack to cover important details in summary."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -1840,
+        -1344
+      ],
+      "id": "5e921fcb-083c-44e1-b6c9-99da9d2befa3",
+      "name": "Code_Summary"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1280,
+        -1568
+      ],
+      "id": "f4f9ee7c-67d3-41b1-8212-d3eb8c245b27",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -1072,
+        -1568
+      ],
+      "id": "653a84c7-3a2e-4574-b266-60252e726fd7",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "sendTo": "lostprince123n@gmail.com",
+        "subject": "Code Summary and Comments",
+        "message": "={{ $json.text }}\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -272,
+        -1568
+      ],
+      "id": "bffa1117-1194-4a94-9304-7d714fb54e4f",
+      "name": "Send a message",
+      "webhookId": "32af35d6-af01-4c2a-a13b-5ca6c331655b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "V50BeEYtdUZinEdJ",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5acb0cc3-4a5e-4028-bc5c-7a8ec52c413c",
+              "name": "Message",
+              "value": "=Code with Comments:\n{{ $json.text[0] }}\n\nCode Summary:\n{{ $json.text[1] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -848,
+        -1568
+      ],
+      "id": "3a5b9008-7eb1-4ea4-9080-089b3ccd388e",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Convert the message into html format.\nInclude proper code blocks wherever necessary. The code blocks should have syntax highlighting for the specific language used in the code.\n\nMessage:\n{{ $json.Message }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You can convert any message into html format that can be sent on mail to the user"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -640,
+        -1568
+      ],
+      "id": "31d7a99a-80c3-429a-8264-0ed891fadf33",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -640,
+        -1360
+      ],
+      "id": "b43c4e7f-b4e7-4cb2-85cf-7efe458d7780",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "u2GmlR9SBNP63fa4",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Nodes\n\n1. Gmail Trigger\n2. Basic LLM Chain Node(2)\n3. Merge Node\n4. Aggregate Node\n5. Edit Fields(Set Node)\n6. Basic LLM Chain \n7. Gmail Node",
+        "height": 192,
+        "width": 432
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1008,
+        -2048
+      ],
+      "typeVersion": 1,
+      "id": "90d035ac-dd60-4e0c-aa82-7e7e314fbc64",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {
+    "Gmail Trigger": [
+      {
+        "json": {
+          "id": "19e9fe66d8d33bcd",
+          "threadId": "19e9fe56a71bd516",
+          "labelIds": [
+            "IMPORTANT",
+            "SENT",
+            "INBOX"
+          ],
+          "sizeEstimate": 1810,
+          "headers": {
+            "mime-version": "MIME-Version: 1.0",
+            "date": "Date: Sun, 7 Jun 2026 07:25:38 +0500",
+            "message-id": "Message-ID: <CABbGR2u61v6Wf1_ZNk8SY+K7cCoco4oS3BFUJqm5CGGXJZ00ZQ@mail.gmail.com>",
+            "subject": "Subject: Sample C++ Code",
+            "from": "From: Nadeem Prince <lostprince123n@gmail.com>",
+            "to": "To: Nadeem Prince <lostprince123n@gmail.com>",
+            "content-type": "Content-Type: multipart/alternative; boundary=\"00000000000019208a0653a09c5b\""
+          },
+          "html": "<div dir=\"ltr\"><p class=\"gmail-isSelectedEnd\">Dear Team,</p><p class=\"gmail-isSelectedEnd\">I hope you are doing well.</p><p class=\"gmail-isSelectedEnd\">Below is the C++ code for the input validation logic we discussed:</p><pre dir=\"ltr\"><code dir=\"ltr\">while (cin.fail())\n{\n    cin.clear();\n    cin.ignore(1000, &#39;\\n&#39;);\n    cout &lt;&lt; &quot;Invalid input! Enter numbers only.\\n&quot;;\n    cin &gt;&gt; row;\n}</code></pre><p class=\"gmail-isSelectedEnd\">This code checks whether the user has entered invalid input and prompts them to enter a valid number.</p><p class=\"gmail-isSelectedEnd\">Please let me know if you need any modifications or further explanation.</p><p>Best regards,<br>Muhammad Nadeem</p></div>\n",
+          "text": "Dear Team,\n\nI hope you are doing well.\n\nBelow is the C++ code for the input validation logic we discussed:\n\nwhile (cin.fail())\n{\n    cin.clear();\n    cin.ignore(1000, '\\n');\n    cout << \"Invalid input! Enter numbers only.\\n\";\n    cin >> row;\n}\n\nThis code checks whether the user has entered invalid input and prompts\nthem to enter a valid number.\n\nPlease let me know if you need any modifications or further explanation.\n\nBest regards,\nMuhammad Nadeem\n",
+          "textAsHtml": "<p>Dear Team,</p><p>I hope you are doing well.</p><p>Below is the C++ code for the input validation logic we discussed:</p><p>while (<a href=\"http://cin.fail\">cin.fail</a>())<br/>{<br/>    cin.clear();<br/>    cin.ignore(1000, &apos;\\n&apos;);<br/>    cout &lt;&lt; &quot;Invalid input! Enter numbers only.\\n&quot;;<br/>    cin &gt;&gt; row;<br/>}</p><p>This code checks whether the user has entered invalid input and prompts<br/>them to enter a valid number.</p><p>Please let me know if you need any modifications or further explanation.</p><p>Best regards,<br/>Muhammad Nadeem</p>",
+          "subject": "Sample C++ Code",
+          "date": "2026-06-07T02:25:38.000Z",
+          "to": {
+            "value": [
+              {
+                "address": "lostprince123n@gmail.com",
+                "name": "Nadeem Prince"
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Nadeem Prince</span> &lt;<a href=\"mailto:lostprince123n@gmail.com\" class=\"mp_address_email\">lostprince123n@gmail.com</a>&gt;</span>",
+            "text": "\"Nadeem Prince\" <lostprince123n@gmail.com>"
+          },
+          "from": {
+            "value": [
+              {
+                "address": "lostprince123n@gmail.com",
+                "name": "Nadeem Prince"
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Nadeem Prince</span> &lt;<a href=\"mailto:lostprince123n@gmail.com\" class=\"mp_address_email\">lostprince123n@gmail.com</a>&gt;</span>",
+            "text": "\"Nadeem Prince\" <lostprince123n@gmail.com>"
+          },
+          "messageId": "<CABbGR2u61v6Wf1_ZNk8SY+K7cCoco4oS3BFUJqm5CGGXJZ00ZQ@mail.gmail.com>"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Comments_Addition",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code_Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Comments_Addition",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comments_Addition": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Code_Summary",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code_Summary": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "679b1a1e-6966-4fbf-87c3-cb7eecc85a3a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2b20ff06a5fd819106b6fde46321d7970fa14c52c584f1db1994bbf3e4a1d9ea"
+  },
+  "nodeGroups": [],
+  "id": "owZkN7pDhF3bX79g",
+  "tags": []
+}
